@@ -4,6 +4,7 @@ import bgu.spl.net.api.BidiMessagingProtocol;
 import bgu.spl.net.srv.Connections;
 
 public class TftpProtocol implements BidiMessagingProtocol<byte[]>  {
+    private boolean shouldTerminate = false;
 
     @Override
     public void start(int connectionId, Connections<byte[]> connections) {
@@ -20,9 +21,7 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]>  {
     @Override
     public boolean shouldTerminate() {
         // TODO implement this
-        throw new UnsupportedOperationException("Unimplemented method 'shouldTerminate'");
+        return shouldTerminate;
     } 
-
-
     
 }
