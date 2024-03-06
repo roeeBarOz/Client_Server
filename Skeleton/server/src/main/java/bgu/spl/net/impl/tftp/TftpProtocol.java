@@ -49,7 +49,6 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
         int blockNumber;
         int errorCode;
         int delAdd;
-        ERRORPacket error;
         switch (opcode) {
             case 1:
                 info = relevantByteTostring(2, message);
