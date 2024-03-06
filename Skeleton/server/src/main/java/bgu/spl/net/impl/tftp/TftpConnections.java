@@ -27,5 +27,8 @@ public class TftpConnections<T> implements Connections<T> {
     public void disconnect(int connectionId) {
         clientConnections.remove(connectionId);
     }
+    public ConcurrentHashMap<Integer, ConnectionHandler> getClientConnections(){
+        return clientConnections;
+    }
     
 }

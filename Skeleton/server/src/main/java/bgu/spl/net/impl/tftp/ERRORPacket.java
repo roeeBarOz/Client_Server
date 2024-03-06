@@ -3,12 +3,12 @@ package bgu.spl.net.impl.tftp;
 public class ERRORPacket{
     private int opcode;
     private int errorCode;
-    private String fileName;
+    private String errorMsg;
 
-    public ERRORPacket(int opcode,int errorCode, String filename){
+    public ERRORPacket(int opcode,int errorCode, String errorMsg){
         this.opcode = opcode;
         this.errorCode = errorCode;
-        this.fileName = filename;
+        this.errorMsg = errorMsg;
     }
 
     public int Opcode(){
@@ -19,7 +19,7 @@ public class ERRORPacket{
         return errorCode;
     }
 
-    public String FileName(){
-        return fileName;
+    public String ErrorMsg(){
+        return errorMsg;
     }
 }
