@@ -3,19 +3,25 @@ package bgu.spl.net.impl.tftp;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 import bgu.spl.net.api.BidiMessagingProtocol;
 import bgu.spl.net.srv.BlockingConnectionHandler;
 import bgu.spl.net.srv.ConnectionHandler;
 import bgu.spl.net.srv.Connections;
+import java.io.File;
+import java.io.IOException;
 
 public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
     private boolean shouldTerminate = false;
     private Connections<byte[]> activeConnections;
+    private int ownerId;
 
     @Override
     public void start(int connectionId, Connections<byte[]> connections) {
         // TODO implement this
         activeConnections = connections;
+        ownerId = connectionId;
         // activeConnections.connect(connectionId, new
         // BlockingConnectionHandler<byte[]>(new Socket(),new
         // TftpEncoderDecoder(),));
@@ -26,14 +32,22 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
         // TODO implement this
         int opcode = convert(0, 1, message);
         String info;
+        String response;
         int blockNumber;
         int errorCode;
         int delAdd;
+        ERRORPacket error;
         switch (opcode) {
             case 1:
                 info = relevantByteTostring(2, message);
+                if(!createResponseToRRQ(info)){
+                    error = new ERRORPacket(5, 5, info);
+                    
+                }
+                break;
             case 2:
                 info = relevantByteTostring(2, message);
+                //response = createResponseToWRQ(info);
                 break;
             case 3:
                 info = relevantByteTostring(6, message);
@@ -63,7 +77,16 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
                 break;
             default:
                 break;
+            
         }
+    }
+
+    private boolean createResponseToRRQ(String filename) {
+        File f = new File("/Skeleton/server/Flies/"+filename);
+        if(!f.exists()){
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -84,5 +107,18 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
     private int convert(int firstByte, int secondByte, byte[] bytes) {
         short b_short = (short) (((short) bytes[firstByte]) << 8 | (short) (bytes[secondByte]));
         return (int) b_short;
+    }
+
+    private boolean createResponseToWRQ(String filename){
+        File f = new File("/Skeleton/server/Flies/"+filename);
+        try {
+            if(f.createNewFile()){
+                return true;
+            }
+            else{
+                return false; // file already exists
+            }
+        } catch (IOException e) {}
+        return false;
     }
 }
