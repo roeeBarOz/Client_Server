@@ -3,11 +3,13 @@ package bgu.spl.net.impl.tftp;
 import bgu.spl.net.api.BidiMessagingProtocol;
 import bgu.spl.net.api.MessageEncoderDecoder;
 import bgu.spl.net.srv.ConnectionHandler;
+import bgu.spl.net.srv.Connections;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.sql.Connection;
 
 public class TftpConnectionHandler implements Runnable, ConnectionHandler<byte[]> {
 
@@ -22,6 +24,9 @@ public class TftpConnectionHandler implements Runnable, ConnectionHandler<byte[]
         this.sock = sock;
         this.encdec = reader;
         this.protocol = protocol;
+        Connections<byte[]> c = new TftpConnections<>();
+        c.connect(0,this);
+        this.protocol.start(0,c);
     }
 
 

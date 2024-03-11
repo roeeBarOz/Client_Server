@@ -12,7 +12,7 @@ public class EchoClient {
     public static void main(String[] args) throws IOException {
 
         if (args.length == 0) {
-            args = new String[]{"localhost", "hello"};
+            args = new String[]{"localhost", "07itay\0"};
         }
 
         if (args.length < 2) {
@@ -27,7 +27,6 @@ public class EchoClient {
 
             System.out.println("sending message to server");
             out.write(args[1]);
-            out.newLine();
             out.flush();
 
             System.out.println("awaiting response");

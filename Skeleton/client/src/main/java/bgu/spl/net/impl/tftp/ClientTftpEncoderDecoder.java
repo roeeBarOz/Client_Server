@@ -7,7 +7,7 @@ import java.util.List;
 
 import bgu.spl.net.api.MessageEncoderDecoder;
 
-public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
+public class ClientTftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
     // TODO: Implement here the TFTP encoder and decoder
 
     private byte[] bytes = new byte[1 << 10]; // start with 1k
@@ -20,7 +20,6 @@ public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
         if (len == 0)
             decodeBytes = new byte[1 << 10];
         bytes[len++] = nextByte;
-        System.out.println(nextByte);
         if (len == 2)
             opcode = convert(0, 1);
         if (opcode != 0) {
@@ -124,9 +123,7 @@ public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
     }
 
     private int convert(int firstByte, int secondByte) {
-        byte[] b = {bytes[firstByte], bytes[secondByte]};
-        String text = new String(b, StandardCharsets.US_ASCII); 
-        int result = Integer.parseInt(text);
-        return result;
+        short b_short = (short) (((short) bytes[firstByte]) << 8 | (short) (bytes[secondByte]));
+        return (int) b_short;
     }
 }

@@ -19,8 +19,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 class holder {
-    static ConcurrentHashMap<Integer, String> loggedIn;
-    static ConcurrentHashMap<String, Integer> files;
+    static ConcurrentHashMap<Integer, String> loggedIn = new ConcurrentHashMap<>();
+    static ConcurrentHashMap<String, Integer> files = new ConcurrentHashMap<>();
 }
 
 public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
@@ -39,7 +39,7 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
         activeConnections = connections;
         ownerId = connectionId;
         // activeConnections.connect(connectionId, new
-        // BlockingConnectionHandler<byte[]>(new Socket(),new
+        // TftpConnectionHandler(new Socket(),new
         // TftpEncoderDecoder(),));
     }
 
@@ -116,8 +116,10 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
     }
 
     private int convert(int firstByte, int secondByte, byte[] bytes) {
-        short b_short = (short) (((short) bytes[firstByte]) << 8 | (short) (bytes[secondByte]));
-        return (int) b_short;
+        byte[] b = {bytes[firstByte], bytes[secondByte]};
+        String text = new String(b, StandardCharsets.US_ASCII); 
+        int result = Integer.parseInt(text);
+        return result;
     }
 
     private void handleRRQ(String filename, int ownerId) {
@@ -267,7 +269,7 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
     }
 
     private void createAndSendErrorPacket(int ownerId, int errorCode) {
-        String message = "05" + (short) errorCode;
+        String message = "050" + (short) errorCode;
         switch (errorCode) {
             case 0:
                 message += "0";
@@ -303,7 +305,10 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
     }
 
     private void createAndSendAckPacket(int ownerId, int blockNumber) {
-        activeConnections.send(ownerId, ("04" + (short) blockNumber).getBytes());
+        if(blockNumber < 16)
+            activeConnections.send(ownerId, ("040" + (short) blockNumber).getBytes());
+        else
+            activeConnections.send(ownerId, ("04" + (short) blockNumber).getBytes());
     }
 
     private void createAndSendBCastPacket(int delAdd, String filename) {
