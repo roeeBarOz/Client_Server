@@ -39,7 +39,6 @@ public class TftpServer implements Server<byte[]>{
             this.sock = serverSock; //just to be able to close
 
             while (!Thread.currentThread().isInterrupted()) {
-
                 Socket clientSock = serverSock.accept();
 
                 TftpConnectionHandler handler = new TftpConnectionHandler(
@@ -57,8 +56,8 @@ public class TftpServer implements Server<byte[]>{
 
     @Override
     public void close() throws IOException {
-		if (sock != null)
-			sock.close();
+		if (sock != null){}
+			//sock.close();
     }
 
     protected void execute(TftpConnectionHandler handler) {
@@ -74,7 +73,9 @@ public class TftpServer implements Server<byte[]>{
         TftpServer server = new TftpServer(7777, protocolSupplier, //protocol factory
         encdecSupplier) ;//message encoder decoder factory);
         server.serve();
-
+        try {
+            server.close();
+        } catch (IOException e) {}
     }
 
 }

@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.w3c.dom.Text;
+
 import bgu.spl.net.api.MessageEncoderDecoder;
 
 public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
@@ -20,9 +22,8 @@ public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
         if (len == 0)
             decodeBytes = new byte[1 << 10];
         bytes[len++] = nextByte;
-        System.out.println(nextByte);
         if (len == 2)
-            opcode = convert(0, 1);
+            opcode = convertToShort(0, 1);
         if (opcode != 0) {
             switch (opcode) {
                 case 1:
@@ -44,7 +45,7 @@ public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                 case 3:
                     int dataLength = 0;
                     if (len == 4) {
-                        dataLength = convert(2, 3) + 2;
+                        dataLength = convertToShort(2, 3) + 2;
                     }
                     if (dataLength != 0) {
                         if (len == dataLength + 4) {
@@ -123,10 +124,7 @@ public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
         return message;
     }
 
-    private int convert(int firstByte, int secondByte) {
-        byte[] b = {bytes[firstByte], bytes[secondByte]};
-        String text = new String(b, StandardCharsets.US_ASCII); 
-        int result = Integer.parseInt(text);
-        return result;
+    private int convertToShort(int firstByte, int secondByte) {
+        return (short) ((short)((bytes[0] & 0xFF) << 8) | (short)(bytes[1]& 0xFF));
     }
 }

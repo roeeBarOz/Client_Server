@@ -35,7 +35,7 @@ public class TftpConnectionHandler implements Runnable, ConnectionHandler<byte[]
         try (Socket sock = this.sock) { //just for automatic closing
             int read;
             in = new BufferedInputStream(sock.getInputStream());
-
+            out = new BufferedOutputStream(sock.getOutputStream());
             while (!protocol.shouldTerminate() && connected && (read = in.read()) >= 0) {
                 byte[] nextMessage = encdec.decodeNextByte((byte) read);
                 if (nextMessage != null) {
@@ -44,6 +44,7 @@ public class TftpConnectionHandler implements Runnable, ConnectionHandler<byte[]
             }
 
         } catch (IOException ex) {
+            System.out.println("here");
             ex.printStackTrace();
         }
 
@@ -52,13 +53,12 @@ public class TftpConnectionHandler implements Runnable, ConnectionHandler<byte[]
     @Override
     public void close() throws IOException {
         connected = false;
-        sock.close();
+        //sock.close();
     }
 
     @Override
     public void send(byte[] msg) {
-        try (Socket sock = this.sock){
-            out = new BufferedOutputStream(sock.getOutputStream());
+        try{
             out.write(msg);
             out.flush();
         } catch (IOException e) {}

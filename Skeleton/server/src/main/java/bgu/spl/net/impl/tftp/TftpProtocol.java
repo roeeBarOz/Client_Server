@@ -46,7 +46,7 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
     @Override
     public void process(byte[] message) {
         // TODO implement this
-        int opcode = convert(0, 1, message);
+        int opcode = convertToShort(0, 1, message);
         String info;
         int blockNumber;
         int errorCode;
@@ -62,11 +62,11 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
                 break;
             case 3:
                 info = relevantByteTostring(6, message);
-                blockNumber = convert(4, 5, message);
+                blockNumber = convertToShort(4, 5, message);
                 handleDATA(ownerId, info, blockNumber);
                 break;
             case 4:
-                blockNumber = convert(2, 3, message);
+                blockNumber = convertToShort(2, 3, message);
                 handleACK(blockNumber, ownerId);
                 break;
             case 5:
@@ -115,11 +115,12 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
         return res;
     }
 
-    private int convert(int firstByte, int secondByte, byte[] bytes) {
-        byte[] b = {bytes[firstByte], bytes[secondByte]};
-        String text = new String(b, StandardCharsets.US_ASCII); 
-        int result = Integer.parseInt(text);
-        return result;
+    private int convertToShort(int firstByte, int secondByte, byte[] bytes) {
+        return (short) ((short)((bytes[0] & 0xFF) << 8) | (short)(bytes[1]& 0xFF));
+    }
+
+    private byte[] convertToBytes(short num){
+        return new byte[]{(byte) (num >> 8), (byte) (num & 0xff)};
     }
 
     private void handleRRQ(String filename, int ownerId) {
@@ -163,7 +164,7 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
                 if (currBlockRead == blockNumber) {
                     try (FileWriter fw = new FileWriter(fileToWrite)) {
                         fw.write(data);
-                        fw.close();
+                        //fw.close();
                         if(data.length() < 512) {
                             int workOn = holder.files.remove(fileToWrite.getName());
                             holder.files.put(fileToWrite.getName(),workOn--);
@@ -305,10 +306,10 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
     }
 
     private void createAndSendAckPacket(int ownerId, int blockNumber) {
-        if(blockNumber < 16)
-            activeConnections.send(ownerId, ("040" + (short) blockNumber).getBytes());
-        else
-            activeConnections.send(ownerId, ("04" + (short) blockNumber).getBytes());
+            byte[] op = convertToBytes((short)04);
+            byte[] blocks = convertToBytes(((short) blockNumber));
+            byte[] message = {op[0],op[1],blocks[0],blocks[1]};
+            activeConnections.send(ownerId, message);
     }
 
     private void createAndSendBCastPacket(int delAdd, String filename) {
