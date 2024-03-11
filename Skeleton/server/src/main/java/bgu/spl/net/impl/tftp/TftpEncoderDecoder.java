@@ -31,6 +31,7 @@ public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                         decodeBytes = Arrays.copyOf(bytes, len - 1);
                         bytes = new byte[1 << 10];
                         len = 0;
+                        opcode = 0;
                         return decodeBytes;
                     }
                     break;
@@ -39,6 +40,7 @@ public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                         decodeBytes = Arrays.copyOf(bytes, len - 1);
                         bytes = new byte[1 << 10];
                         len = 0;
+                        opcode = 0;
                         return decodeBytes;
                     }
                     break;
@@ -52,6 +54,7 @@ public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                             decodeBytes = Arrays.copyOf(bytes, len - 1);
                             bytes = new byte[1 << 10];
                             len = 0;
+                            opcode = 0;
                             return decodeBytes;
                         }
                     }
@@ -61,6 +64,7 @@ public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                         decodeBytes = Arrays.copyOf(bytes, len);
                         bytes = new byte[1 << 10];
                         len = 0;
+                        opcode = 0;
                         return decodeBytes;
                     }
                     break;
@@ -69,6 +73,7 @@ public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                         decodeBytes = Arrays.copyOf(bytes, len - 1);
                         bytes = new byte[1 << 10];
                         len = 0;
+                        opcode = 0;
                         return decodeBytes;
                     }
                     break;
@@ -77,6 +82,7 @@ public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                         decodeBytes = Arrays.copyOf(bytes, len);
                         bytes = new byte[1 << 10];
                         len = 0;
+                        opcode = 0;
                         return decodeBytes;
                     }
                     break;
@@ -85,6 +91,7 @@ public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                         decodeBytes = Arrays.copyOf(bytes, len - 1);
                         bytes = new byte[1 << 10];
                         len = 0;
+                        opcode = 0;
                         return decodeBytes;
                     }
                     break;
@@ -93,6 +100,7 @@ public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                         decodeBytes = Arrays.copyOf(bytes, len - 1);
                         bytes = new byte[1 << 10];
                         len = 0;
+                        opcode = 0;
                         return decodeBytes;
                     }
                     break;
@@ -101,6 +109,7 @@ public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                         decodeBytes = Arrays.copyOf(bytes, len - 1);
                         bytes = new byte[1 << 10];
                         len = 0;
+                        opcode = 0;
                         return decodeBytes;
                     }
                     break;
@@ -109,6 +118,7 @@ public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                         decodeBytes = Arrays.copyOf(bytes, len);
                         bytes = new byte[1 << 10];
                         len = 0;
+                        opcode = 0;
                         return decodeBytes;
                     }
                     break;
@@ -125,6 +135,6 @@ public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
     }
 
     private int convertToShort(int firstByte, int secondByte) {
-        return (short) ((short)((bytes[0] & 0xFF) << 8) | (short)(bytes[1]& 0xFF));
+        return (short) ((short)((bytes[firstByte] & 0xFF) << 8) | (short)(bytes[secondByte]& 0xFF));
     }
 }
