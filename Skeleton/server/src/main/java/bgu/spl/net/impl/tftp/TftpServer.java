@@ -40,7 +40,6 @@ public class TftpServer implements Server<byte[]>{
 
             while (!Thread.currentThread().isInterrupted()) {
                 Socket clientSock = serverSock.accept();
-
                 TftpConnectionHandler handler = new TftpConnectionHandler(
                         clientSock,
                         encdecFactory.get(),
@@ -70,7 +69,7 @@ public class TftpServer implements Server<byte[]>{
         // you can use any server... 
         Supplier<BidiMessagingProtocol<byte[]>> protocolSupplier = () -> new TftpProtocol();
         Supplier<MessageEncoderDecoder<byte[]>> encdecSupplier = () -> new TftpEncoderDecoder();
-        TftpServer server = new TftpServer(7777, protocolSupplier, //protocol factory
+        TftpServer server = new TftpServer(Integer.valueOf(args[0]), protocolSupplier, //protocol factory
         encdecSupplier) ;//message encoder decoder factory);
         server.serve();
         try {

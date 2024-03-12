@@ -9,6 +9,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 
 public class TftpConnectionHandler implements Runnable, ConnectionHandler<byte[]> {
@@ -19,6 +20,7 @@ public class TftpConnectionHandler implements Runnable, ConnectionHandler<byte[]
     private BufferedInputStream in;
     private BufferedOutputStream out;
     private volatile boolean connected = true;
+    private static int id = 0;
 
     public TftpConnectionHandler(Socket sock, MessageEncoderDecoder reader, BidiMessagingProtocol protocol) {
         this.sock = sock;
@@ -26,7 +28,7 @@ public class TftpConnectionHandler implements Runnable, ConnectionHandler<byte[]
         this.protocol = protocol;
         Connections<byte[]> c = new TftpConnections<>();
         c.connect(0,this);
-        this.protocol.start(0,c);
+        this.protocol.start(id++, c);
     }
 
 
@@ -39,10 +41,10 @@ public class TftpConnectionHandler implements Runnable, ConnectionHandler<byte[]
             while (!protocol.shouldTerminate() && connected && (read = in.read()) >= 0) {
                 byte[] nextMessage = encdec.decodeNextByte((byte) read);
                 if (nextMessage != null) {
+                    System.out.println("NOT NULL");
                    protocol.process(nextMessage);
                 }
             }
-
         } catch (IOException ex) {
             System.out.println("here");
             ex.printStackTrace();
@@ -53,7 +55,7 @@ public class TftpConnectionHandler implements Runnable, ConnectionHandler<byte[]
     @Override
     public void close() throws IOException {
         connected = false;
-        //sock.close();
+        sock.close();
     }
 
     @Override
