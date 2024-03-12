@@ -16,6 +16,7 @@ public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
     private int len = 0;
     private byte[] decodeBytes = new byte[1 << 10];
     private int opcode = 0;
+    private int dataLength;
 
     @Override
     public byte[] decodeNextByte(byte nextByte) {
@@ -45,13 +46,14 @@ public class TftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                     }
                     break;
                 case 3:
-                    int dataLength = 0;
-                    if (len == 4) {
-                        dataLength = convertToShort(2, 3) + 2;
+                    if(len == 2)
+                        dataLength = 0;
+                    if (len >= 4) {
+                        dataLength = convertToShort(2, 3);
                     }
                     if (dataLength != 0) {
-                        if (len == dataLength + 4) {
-                            decodeBytes = Arrays.copyOf(bytes, len - 1);
+                        if (len == dataLength + 6) {
+                            decodeBytes = Arrays.copyOf(bytes, len);
                             bytes = new byte[1 << 10];
                             len = 0;
                             opcode = 0;

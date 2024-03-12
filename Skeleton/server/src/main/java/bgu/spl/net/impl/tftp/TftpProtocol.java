@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -19,6 +20,7 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -26,7 +28,7 @@ import java.lang.reflect.Array;
 
 class holder {
     static ConcurrentHashMap<Integer, byte[]> loggedIn = new ConcurrentHashMap<>();
-    static ConcurrentHashMap<byte[], Integer> files = new ConcurrentHashMap<>();
+    static ConcurrentHashMap<String, Integer> files = new ConcurrentHashMap<>();
 }
 
 public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
@@ -34,6 +36,7 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
     private Connections<byte[]> activeConnections;
     private int ownerId;
     private final File filepath = new File("Skeleton/server/Flies");
+    private FileOutputStream fw;
     private File fileToRead;
     private File fileToWrite;
     private int currBlockRead = 1;
@@ -115,11 +118,11 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
             if (!fileToRead.exists()) {
                 createAndSendErrorPacket(ownerId, 1);
             } else {
-                if (!holder.files.containsKey(filename)) {
-                    holder.files.put(filename, 0);
+                if (!holder.files.containsKey(bytesToString(filename))) {
+                    holder.files.put(bytesToString(filename), 0);
                 } else {
-                    int workOn = holder.files.remove(filename);
-                    holder.files.put(filename, workOn++);
+                    int workOn = holder.files.remove(bytesToString(filename));
+                    holder.files.put(bytesToString(filename), workOn++);
                 }
                 try {
                     FileInputStream fin = new FileInputStream(fileToRead);
@@ -147,7 +150,9 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
                 }
                 // else: we just finished
                 else {
-                    holder.files.put(filename, 0);
+                    currBlockWrite = 1;
+                    holder.files.put(fileToWrite.getName(), 1);
+                    fw = new FileOutputStream(fileToWrite);
                     createAndSendAckPacket(ownerId, 0);
                 }
             } catch (IOException e) {
@@ -160,30 +165,29 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
     }
 
     private void handleDATA(int ownerId, byte[] data, int blockNumber) {
+        System.out.println("outside");
         if (holder.loggedIn.containsKey(ownerId)) {
+            System.out.println("in once");
             if (filepath.getUsableSpace() >= data.length) {
-                if (currBlockRead == blockNumber) {
-                    try (FileWriter fw = new FileWriter(fileToWrite)) {
-                        fw.write(bytesToString(data));
-                        // fw.close();
+                System.out.println("in twice");
+                if (currBlockWrite == blockNumber) {
+                    System.out.println("in three");
+                    try {
+                        fw.write(data);
+                        System.out.println(data.length);
                         if (data.length < 512) {
                             int workOn = holder.files.remove(fileToWrite.getName());
-                            holder.files.put(fileToWrite.getName().getBytes("UTF-8"), workOn--);
+                            holder.files.put(fileToWrite.getName(), workOn--);
                             fileToWrite = null;
                         }
+                        createAndSendAckPacket(ownerId, currBlockWrite);
+                        currBlockWrite++;
                     } catch (IOException e) {
                         createAndSendErrorPacket(ownerId, 2);
                     }
-                    currBlockRead++;
-                    createAndSendAckPacket(ownerId, blockNumber);
                 }
             } else {
-                try {
-                    holder.files.remove(fileToWrite.getName().getBytes("UTF-8"));
-                } catch (UnsupportedEncodingException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
+                holder.files.remove(fileToWrite.getName());
                 fileToWrite.delete();
                 createAndSendErrorPacket(ownerId, 3);
             }
@@ -228,13 +232,13 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
                             }
                         }
                     } else {
-                        int workOn = holder.files.remove(fileToRead.getName().getBytes("UTF-8"));
-                        holder.files.put(fileToWrite.getName().getBytes("UTF-8"), ++workOn);
+                        int workOn = holder.files.remove(fileToRead.getName());
+                        holder.files.put(fileToWrite.getName(), ++workOn);
                     }
                 } catch (IOException e) {
                     createAndSendErrorPacket(ownerId, 0);
                 }
-                currBlockWrite++;
+                // currBlockWrite++;
             }
         } else {
             createAndSendErrorPacket(ownerId, 6);
@@ -277,7 +281,7 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
         if (holder.loggedIn.containsKey(ownerId)) {
             File f = new File("Skeleton/server/Flies" + filename);
             if (f.delete()) {
-                holder.files.remove(filename);
+                holder.files.remove(bytesToString(filename));
                 createAndSendBCastPacket(1, filename);
             } else
                 createAndSendErrorPacket(ownerId, 1);

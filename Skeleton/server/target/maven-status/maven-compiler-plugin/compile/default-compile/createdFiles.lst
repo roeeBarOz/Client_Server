@@ -1,3 +1,4 @@
+bgu/spl/net/impl/tftp/TftpConnections.class
 bgu/spl/net/srv/Server$1.class
 bgu/spl/net/impl/newsfeed/NewsFeedServerMain.class
 bgu/spl/net/impl/rci/Command.class
@@ -10,6 +11,7 @@ bgu/spl/net/srv/ConnectionHandler.class
 bgu/spl/net/impl/newsfeed/NewsFeed.class
 bgu/spl/net/srv/BaseServer.class
 bgu/spl/net/srv/Server.class
+bgu/spl/net/impl/tftp/holder.class
 bgu/spl/net/impl/echo/EchoClient.class
 bgu/spl/net/impl/rci/RemoteCommandInvocationProtocol.class
 bgu/spl/net/impl/echo/EchoProtocol.class
@@ -17,9 +19,10 @@ bgu/spl/net/api/BidiMessagingProtocol.class
 bgu/spl/net/impl/echo/EchoServer.class
 bgu/spl/net/impl/tftp/TftpProtocol.class
 bgu/spl/net/impl/newsfeed/NewsFeedClientMain.class
-bgu/spl/net/api/MessageEncoderDecoder.class
 bgu/spl/net/impl/newsfeed/PublishNewsCommand.class
+bgu/spl/net/api/MessageEncoderDecoder.class
 bgu/spl/net/srv/Connections.class
+bgu/spl/net/impl/tftp/TftpConnectionHandler.class
 bgu/spl/net/impl/rci/ObjectEncoderDecoder.class
 bgu/spl/net/impl/newsfeed/FetchNewsCommand.class
 bgu/spl/net/impl/tftp/TftpEncoderDecoder.class
