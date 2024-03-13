@@ -3,6 +3,7 @@ package bgu.spl.net.impl.tftp;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -25,6 +26,8 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
     private int currBlockRead = 1;
     private int currBlockWrite = 1;
     private FileOutputStream fw;
+    private FileInputStream fis;
+    private DataInputStream dis;
     private boolean RRQorDIRQ; // true = RRQ, false = DIRQ
     private String currentOperation;
 
@@ -71,12 +74,21 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
                 opcode = 1;
                 data = msg.substring(command[0].length() + 1);
                 fileToWrite = new File(DIR_PATH, data);
+                try {
+                    fw = new FileOutputStream(fileToWrite);
+                } catch (FileNotFoundException e) {
+                }
                 currBlockWrite = 1;
                 break;
             case "WRQ":
                 opcode = 2;
                 data = msg.substring(command[0].length() + 1);
                 fileToRead = new File(DIR_PATH, data);
+                try {
+                    fis = new FileInputStream(fileToRead);
+                    dis = new DataInputStream(fis);
+                } catch (FileNotFoundException e) {
+                }
                 currBlockRead = 1;
                 break;
             case "DATA":
@@ -152,53 +164,16 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
 
     private byte[] handleACKFrom(int block) {
         System.out.println("Handling ACK");
-        if(block == 0)
-            return new byte[]{0x0,0x4,0x0,0x0};
+        if (block == 0)
+            return new byte[] { 0x0, 0x4, 0x0, 0x0 };
         if (currBlockRead == block) {
             if (fileToRead != null) {
-                try (FileInputStream fis = new FileInputStream(DIR_PATH + fileToRead.getName())) {
-                    DataInputStream din = new DataInputStream(fis);
-                    long skip = (currBlockRead - 1) * 512;
-                    long skipped = fis.skip(skip);
-                    if (skipped == skip) {
-                        // Create a byte array to store the read data
-                        if (fileToRead.length() - skip >= 0) {
-                            byte[] buffer = new byte[Math.min(512, (int) (fileToRead.length() - skip))];
-
-                            // Read 512 bytes from the current file position into the buffer
-                            int bytesRead = din.read(buffer);
-                            // Check if there is any data read
-                            if (bytesRead >= 0) {
-                                // Process the read data (in this example, just print it as a string)
-                                byte[] data = buffer;
-                                byte[] opcode = { (byte) 0, (byte) 3 };
-                                opcode = mergeArr(opcode, convertToBytes((short) data.length));
-                                byte[] blockByte = convertToBytes((short) block);
-                                opcode = mergeArr(opcode, blockByte);
-                                data = mergeArr(opcode, data);
-                                return data;
-                            }
-                            else{
-                                System.out.println("problem with file read");
-                            }
-                        }
-                        else{
-                            System.out.println("problem with file");
-                        }
-                    }
-                    else{
-                        System.out.println("problem with file");
-                    }
-                } catch (IOException e) {
-                    System.out.println("problem with file");
-                }
-            }
-            else{
+                return createDataPacket();
+            } else {
                 System.out.println("problem with file");
             }
             currBlockRead++;
-        }
-        else{
+        } else {
             System.out.println("Wrong block number received for data");
         }
         return null;
@@ -214,8 +189,7 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
                     System.out.println("i dont know what happened");
                     return null;
                 }
-            }
-            else{
+            } else {
                 System.out.println("Wrong block number received for data");
                 return null;
             }
@@ -253,10 +227,23 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
         return null;
     }
 
+    private byte[] createDataPacket() {
+        byte[] data;
+        try {
+            data = new byte[Math.max(512, dis.available())];
+            int read = dis.read(data);
+            byte[] opcode = { 0x0, 0x3 };
+            data = mergeArr(opcode, data);
+            return data;
+        } catch (IOException e) {
+        }
+        return null;
+    }
+
     @Override
     public boolean shouldTerminate() {
         // TODO Auto-generated method stub
-       return shouldTerminate;
+        return shouldTerminate;
     }
 
     private byte[] mergeArr(byte[] b1, byte[] b2) {
