@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.w3c.dom.Text;
+
 import bgu.spl.net.api.MessageEncoderDecoder;
 
 public class ClientTftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
@@ -14,6 +16,7 @@ public class ClientTftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
     private int len = 0;
     private byte[] decodeBytes = new byte[1 << 10];
     private int opcode = 0;
+    private int dataLength;
 
     @Override
     public byte[] decodeNextByte(byte nextByte) {
@@ -21,7 +24,7 @@ public class ClientTftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
             decodeBytes = new byte[1 << 10];
         bytes[len++] = nextByte;
         if (len == 2)
-            opcode = convert(0, 1);
+            opcode = convertToShort(0, 1);
         if (opcode != 0) {
             switch (opcode) {
                 case 1:
@@ -29,6 +32,7 @@ public class ClientTftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                         decodeBytes = Arrays.copyOf(bytes, len - 1);
                         bytes = new byte[1 << 10];
                         len = 0;
+                        opcode = 0;
                         return decodeBytes;
                     }
                     break;
@@ -37,19 +41,22 @@ public class ClientTftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                         decodeBytes = Arrays.copyOf(bytes, len - 1);
                         bytes = new byte[1 << 10];
                         len = 0;
+                        opcode = 0;
                         return decodeBytes;
                     }
                     break;
                 case 3:
-                    int dataLength = 0;
-                    if (len == 4) {
-                        dataLength = convert(2, 3) + 2;
+                    if(len == 2)
+                        dataLength = 0;
+                    if (len >= 4) {
+                        dataLength = convertToShort(2, 3);
                     }
                     if (dataLength != 0) {
-                        if (len == dataLength + 4) {
-                            decodeBytes = Arrays.copyOf(bytes, len - 1);
+                        if (len == dataLength + 6) {
+                            decodeBytes = Arrays.copyOf(bytes, len);
                             bytes = new byte[1 << 10];
                             len = 0;
+                            opcode = 0;
                             return decodeBytes;
                         }
                     }
@@ -59,6 +66,7 @@ public class ClientTftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                         decodeBytes = Arrays.copyOf(bytes, len);
                         bytes = new byte[1 << 10];
                         len = 0;
+                        opcode = 0;
                         return decodeBytes;
                     }
                     break;
@@ -67,6 +75,7 @@ public class ClientTftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                         decodeBytes = Arrays.copyOf(bytes, len - 1);
                         bytes = new byte[1 << 10];
                         len = 0;
+                        opcode = 0;
                         return decodeBytes;
                     }
                     break;
@@ -75,6 +84,7 @@ public class ClientTftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                         decodeBytes = Arrays.copyOf(bytes, len);
                         bytes = new byte[1 << 10];
                         len = 0;
+                        opcode = 0;
                         return decodeBytes;
                     }
                     break;
@@ -83,6 +93,7 @@ public class ClientTftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                         decodeBytes = Arrays.copyOf(bytes, len - 1);
                         bytes = new byte[1 << 10];
                         len = 0;
+                        opcode = 0;
                         return decodeBytes;
                     }
                     break;
@@ -91,6 +102,7 @@ public class ClientTftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                         decodeBytes = Arrays.copyOf(bytes, len - 1);
                         bytes = new byte[1 << 10];
                         len = 0;
+                        opcode = 0;
                         return decodeBytes;
                     }
                     break;
@@ -99,6 +111,7 @@ public class ClientTftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                         decodeBytes = Arrays.copyOf(bytes, len - 1);
                         bytes = new byte[1 << 10];
                         len = 0;
+                        opcode = 0;
                         return decodeBytes;
                     }
                     break;
@@ -107,6 +120,7 @@ public class ClientTftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                         decodeBytes = Arrays.copyOf(bytes, len);
                         bytes = new byte[1 << 10];
                         len = 0;
+                        opcode = 0;
                         return decodeBytes;
                     }
                     break;
@@ -122,8 +136,7 @@ public class ClientTftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
         return message;
     }
 
-    private int convert(int firstByte, int secondByte) {
-        short b_short = (short) (((short) bytes[firstByte]) << 8 | (short) (bytes[secondByte]));
-        return (int) b_short;
+    private int convertToShort(int firstByte, int secondByte) {
+        return (short) ((short)((bytes[firstByte] & 0xFF) << 8) | (short)(bytes[secondByte]& 0xFF));
     }
 }
