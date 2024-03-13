@@ -14,10 +14,10 @@ import java.util.LinkedList;
 import java.util.List;
 
 import bgu.spl.net.api.MessagingProtocol;
+import javafx.scene.paint.Stop;
 
 public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
 
-    private final String DIR_PATH = "/";
     private boolean shouldTerminate;
     private final byte[] zero = { (byte) 0 };
     private int blockNumber;
@@ -61,7 +61,6 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
 
     public byte[] processTo(String msg) {
         String[] command = msg.split("\\s+");
-
         if (command.length == 0) {
             System.out.println("Invalid command");
             return null;
@@ -71,9 +70,10 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
         currentOperation = command[0];
         switch (command[0]) {
             case "RRQ":
+                RRQorDIRQ = true;
                 opcode = 1;
                 data = msg.substring(command[0].length() + 1);
-                fileToWrite = new File(DIR_PATH, data);
+                fileToWrite = new File(data);
                 try {
                     fw = new FileOutputStream(fileToWrite);
                 } catch (FileNotFoundException e) {
@@ -83,13 +83,12 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
             case "WRQ":
                 opcode = 2;
                 data = msg.substring(command[0].length() + 1);
-                fileToRead = new File(DIR_PATH, data);
+                fileToRead = new File(data);
                 try {
                     fis = new FileInputStream(fileToRead);
                     dis = new DataInputStream(fis);
-                } catch (FileNotFoundException e) {
-                }
-                currBlockRead = 1;
+                    currBlockRead = 0;
+                } catch (FileNotFoundException e) {}
                 break;
             case "DATA":
                 opcode = 3;
@@ -100,6 +99,7 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
                 data = msg.substring(command[0].length() + 1);
                 break;
             case "DIRQ":
+                RRQorDIRQ = false;
                 opcode = 6;
                 break;
             case "LOGRQ":
@@ -164,17 +164,21 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
 
     private byte[] handleACKFrom(int block) {
         System.out.println("Handling ACK");
-        if (block == 0)
-            return new byte[] { 0x0, 0x4, 0x0, 0x0 };
-        if (currBlockRead == block) {
-            if (fileToRead != null) {
-                return createDataPacket();
-            } else {
-                System.out.println("problem with file");
+        if(currentOperation.equals("WRQ") || block != 0){
+            if(block == currBlockRead){
+                currBlockRead++;
+                try {
+                    byte[] data = new byte[Math.min(512, (int) dis.available())];
+                    dis.read(data);
+                    byte[] packet = mergeArr(new byte[]{0x0, 0x3}, convertToBytes((short) data.length));
+                    packet = mergeArr(packet, convertToBytes((short) currBlockRead));
+                    packet = mergeArr(packet, data);
+                    return packet;
+                } catch (IOException e) {}
             }
-            currBlockRead++;
-        } else {
-            System.out.println("Wrong block number received for data");
+            else{
+                System.out.println("Wrong block number received for data");
+            }
         }
         return null;
     }
@@ -194,8 +198,8 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
                 return null;
             }
         } else { // means data is from DIRQ
+            List<Byte> file = new LinkedList();
             for (byte b : data) {
-                List<Byte> file = new LinkedList();
                 if (b != 0x0) {
                     file.add(b);
                 } else {
@@ -203,7 +207,9 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
                     for (int i = 0; i < fileToPrint.length; i++) {
                         fileToPrint[i] = file.get(i);
                     }
-                    System.out.println(bytesToString(fileToPrint));
+                    file = new LinkedList<>();
+                    String name = new String(fileToPrint,StandardCharsets.UTF_8);
+                    System.out.println(name);
                 }
             }
         }
@@ -224,19 +230,6 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
         System.out.println("Handling ERROR");
         String print = "Error " + errorCode + "\n" + bytesToString(data);
         System.out.println(print);
-        return null;
-    }
-
-    private byte[] createDataPacket() {
-        byte[] data;
-        try {
-            data = new byte[Math.max(512, dis.available())];
-            int read = dis.read(data);
-            byte[] opcode = { 0x0, 0x3 };
-            data = mergeArr(opcode, data);
-            return data;
-        } catch (IOException e) {
-        }
         return null;
     }
 
