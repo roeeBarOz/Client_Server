@@ -71,7 +71,7 @@ public class ClientTftpEncoderDecoder implements MessageEncoderDecoder<byte[]> {
                     }
                     break;
                 case 5:
-                    if (nextByte == (byte) 0) {
+                    if (nextByte == (byte) 0 && len > 4) {
                         decodeBytes = Arrays.copyOf(bytes, len - 1);
                         bytes = new byte[1 << 10];
                         len = 0;

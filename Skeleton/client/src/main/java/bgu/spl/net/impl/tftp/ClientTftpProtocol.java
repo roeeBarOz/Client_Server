@@ -16,7 +16,7 @@ import bgu.spl.net.api.MessagingProtocol;
 
 public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
 
-    private final String DIR_PATH = "";
+    private final String DIR_PATH = "/";
     private boolean shouldTerminate;
     private final byte[] zero = { (byte) 0 };
     private int blockNumber;
@@ -30,6 +30,7 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
 
     @Override
     public byte[] process/* From */(byte[] msg) {
+        System.out.println("Received: " + Arrays.toString(msg));
         int opcode = convertToShort(0, 1, msg);
         byte[] data;
         int block;
@@ -56,7 +57,7 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
     }
 
     public byte[] processTo(String msg) {
-        String[] command = msg.split("");
+        String[] command = msg.split("\\s+");
 
         if (command.length == 0) {
             System.out.println("Invalid command");
@@ -151,6 +152,8 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
 
     private byte[] handleACKFrom(int block) {
         System.out.println("Handling ACK");
+        if(block == 0)
+            return new byte[]{0x0,0x4,0x0,0x0};
         if (currBlockRead == block) {
             if (fileToRead != null) {
                 try (FileInputStream fis = new FileInputStream(DIR_PATH + fileToRead.getName())) {
@@ -253,7 +256,7 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
     @Override
     public boolean shouldTerminate() {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'shouldTerminate'");
+       return shouldTerminate;
     }
 
     private byte[] mergeArr(byte[] b1, byte[] b2) {

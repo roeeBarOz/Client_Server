@@ -15,7 +15,6 @@ import bgu.spl.net.api.BidiMessagingProtocol;
 import bgu.spl.net.srv.BlockingConnectionHandler;
 import bgu.spl.net.srv.ConnectionHandler;
 import bgu.spl.net.srv.Connections;
-
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,8 +31,8 @@ class holder {
 }
 
 public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
-    
-    private final String DIR_PATH = "Flies";
+
+    private final String DIR_PATH = "Flies/";
     private boolean shouldTerminate = false;
     private Connections<byte[]> activeConnections;
     private int ownerId;
@@ -45,6 +44,8 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
     private int currBlockWrite = 1;
     private final byte[] zero = { (byte) 0 };
     private byte[][] sendDirq;
+    private FileInputStream fis;
+    private DataInputStream dis;
 
     @Override
     public void start(int connectionId, Connections<byte[]> connections) {
@@ -131,11 +132,10 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
                     holder.files.put(bytesToString(filename), workOn++);
                 }
                 try {
-                    FileInputStream fin = new FileInputStream(fileToRead);
-                    DataInputStream din = new DataInputStream(fin);
+                    fis = new FileInputStream(fileToRead);
+                    dis = new DataInputStream(fis);
                     byte[] b = new byte[Math.min(512, (int) fileToRead.length())];
-                    din.read(b);
-                    din.close();
+                    dis.read(b);
                     currBlockRead = 1;
                     createAndSendDataPacket(b, ownerId, 1);
                 } catch (Exception e) {
@@ -207,27 +207,22 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
             if (currBlockRead == blockNumber) {
                 currBlockRead++;
                 if (fileToRead != null) {
-                    try (FileInputStream fis = new FileInputStream(DIR_PATH + fileToRead.getName())) {
-                        DataInputStream din = new DataInputStream(fis);
-                        long skip = (blockNumber) * 512;
-                        long skipped = fis.skip(skip);
-                        if (skipped == skip) {
-                            // Create a byte array to store the read data
-                            if (fileToRead.length() - skip >= 0) {
-                                byte[] buffer = new byte[Math.min(512, (int) (fileToRead.length() - skip))];
+                    try {
+                        // Create a byte array to store the read data
+                        byte[] buffer = new byte[Math.min(512, dis.available())];
 
-                                // Read 512 bytes from the current file position into the buffer
-                                int bytesRead = din.read(buffer);
-                                // Check if there is any data read
-                                if (bytesRead > 0) {
-                                    // Process the read data (in this example, just print it as a string)
-                                    byte[] data = buffer;
-                                    createAndSendDataPacket(data, ownerId, ++blockNumber);
-                                }
-                            }
-                        } else {
+                        // Read 512 bytes from the current file position into the buffer
+                        int bytesRead = dis.read(buffer);
+                        // Check if there is any data read
+                        if (bytesRead > 0) {
+                            // Process the read data (in this example, just print it as a string)
+                            byte[] data = buffer;
+                            createAndSendDataPacket(data, ownerId, ++blockNumber);
+                        }
+                        if (bytesRead < 512) {
+                            System.out.println(fileToRead.getName());
                             int workOn = holder.files.remove(fileToRead.getName());
-                            holder.files.put(fileToWrite.getName(), ++workOn);
+                            holder.files.put(fileToRead.getName(), --workOn);
                         }
                     } catch (IOException e) {
                         createAndSendErrorPacket(ownerId, 0);
@@ -280,8 +275,8 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
                     }
                 }
                 createAndSendDataPacket(data, ownerId, 1);
-            }
-            else createAndSendErrorPacket(ownerId, 0);
+            } else
+                createAndSendErrorPacket(ownerId, 0);
         } else {
             createAndSendErrorPacket(ownerId, 6);
         }

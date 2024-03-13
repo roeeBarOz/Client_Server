@@ -23,21 +23,27 @@ public class TftpClient {
         ClientTftpEncoderDecoder encdec = new ClientTftpEncoderDecoder();
         int port = Integer.valueOf(args[1]);
         boolean shouldTerminate = false;
-        BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
         Socket clientSocket = new Socket(serverIP, port);
         BufferedOutputStream outToServer = new BufferedOutputStream(clientSocket.getOutputStream());
-        BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        
-        while(!shouldTerminate){
-            String input = keyboard.nextLine();
-             if(isValid(input)){
-
-             }
-        }
         
         Thread listener = new Thread(new ListeningThread(clientSocket,encdec, protocol));
         listener.start();
         System.out.println("Client started");
+        while(!shouldTerminate){
+            String input = keyboard.nextLine();
+             if(isValid(input)){
+                    try{
+                        byte[] res = encdec.encode(protocol.processTo(input));
+                        outToServer.write(res);
+                        outToServer.flush();
+                        
+                    }
+                    catch(IOException e){
+                        e.printStackTrace();;
+                    }
+             }
+        }
+        
         
 
         
@@ -46,25 +52,25 @@ public class TftpClient {
 
 
     private static boolean isValid(String input){
-        String[] temp = input.split("");
+        String[] temp = input.split("\\s+");
         if(temp.length == 0)
             return false;
-        if(temp[0] == "LOGRQ" || temp[0] == "RRQ" || temp[0] == "WRQ" || temp[0] == "DELRQ"){
+        if(temp[0].equals("LOGRQ") || temp[0].equals("RRQ") || temp[0].equals("WRQ") || temp[0].equals("DELRQ")){
             if(temp.length < 2){
                 System.out.println("Invalid command");
                 return false;
             }
             else{
-
+                return true;
             }
         }
-        if(temp[0] == "DIRQ" || temp[0] == "DISC"){
+        if(temp[0].equals("DIRQ") || temp[0].equals("DISC")){
             if(temp.length < 1){
                 System.out.println("Invalid command");
                 return false;
             }
             else{
-                
+                return true;
             }
         }
         System.out.println("Invalid command");

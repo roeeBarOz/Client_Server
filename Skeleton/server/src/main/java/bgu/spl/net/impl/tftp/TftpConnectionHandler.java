@@ -58,10 +58,12 @@ public class TftpConnectionHandler implements Runnable, ConnectionHandler<byte[]
 
     @Override
     public void send(byte[] msg) {
-        try{
-            out.write(msg);
-            out.flush();
-        } catch (IOException e) {}
+        synchronized(out){
+            try{
+                out.write(msg);
+                out.flush();
+            } catch (IOException e) {}
+        }
     }
     
 }
