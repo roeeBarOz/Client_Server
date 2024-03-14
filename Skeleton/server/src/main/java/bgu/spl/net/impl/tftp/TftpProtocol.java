@@ -308,9 +308,9 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
     }
 
     private void handleDISC(int ownerId) {
+        shouldTerminate = true;
         if (holder.loggedIn.containsKey(ownerId)) {
             holder.loggedIn.remove(ownerId);
-            shouldTerminate = true;
             createAndSendAckPacket(ownerId, 0);
         } else {
             createAndSendErrorPacket(ownerId, 6);

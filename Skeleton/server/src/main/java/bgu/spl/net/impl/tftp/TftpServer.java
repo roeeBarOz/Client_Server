@@ -55,8 +55,8 @@ public class TftpServer implements Server<byte[]>{
 
     @Override
     public void close() throws IOException {
-		if (sock != null){}
-			//sock.close();
+		if (sock != null)
+			sock.close();
     }
 
     protected void execute(TftpConnectionHandler handler) {
