@@ -14,11 +14,13 @@ public class ListeningThread implements Runnable {
     private BufferedInputStream in;
     private BufferedOutputStream out;
     private volatile boolean connected = true;
+    private Thread keyboard;
 
-    public ListeningThread(Socket sock, ClientTftpEncoderDecoder reader, ClientTftpProtocol protocol) {
+    public ListeningThread(Socket sock, ClientTftpEncoderDecoder reader, ClientTftpProtocol protocol, Thread keyboard) {
         this.sock = sock;
         this.encdec = reader;
         this.protocol = protocol;
+        this.keyboard = keyboard;
     }
 
     @Override
@@ -34,12 +36,16 @@ public class ListeningThread implements Runnable {
                 if (nextMessage != null) {
                     byte[] response = protocol.process(nextMessage);
                     if (response != null) {
-                        out.write(encdec.encode(response));
-                        out.flush();
+                        synchronized(out){
+                            out.write(encdec.encode(response));
+                            out.flush();
+                        }
                     }
                 }
+                synchronized(keyboard){
+                    keyboard.notifyAll();
+                }
             }
-            this.close();
 
         } catch (IOException ex) {
             ex.printStackTrace();

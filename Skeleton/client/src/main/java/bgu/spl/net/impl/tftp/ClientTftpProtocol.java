@@ -291,5 +291,4 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
             return null;
         }
     }
-
 }
