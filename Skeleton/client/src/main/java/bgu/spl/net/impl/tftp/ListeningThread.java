@@ -39,6 +39,7 @@ public class ListeningThread implements Runnable {
                     }
                 }
             }
+            this.close();
 
         } catch (IOException ex) {
             ex.printStackTrace();

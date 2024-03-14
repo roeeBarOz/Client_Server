@@ -8,6 +8,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
+import java.net.Socket;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -52,7 +54,7 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
                 return handleERRORFrom(errorCode, data);
             case 9:
                 int delAdd = msg[2];
-                data = Arrays.copyOfRange(msg, 3, msg.length - 1);
+                data = Arrays.copyOfRange(msg, 3, msg.length);
                 return handleBCASTFrom(delAdd, data);
             default:
                 return null;
@@ -180,6 +182,8 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
                 System.out.println("Wrong block number received for data");
             }
         }
+        if(currentOperation.equals("DISC"))
+            shouldTerminate = true;
         return null;
     }
 
@@ -199,8 +203,9 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
             }
         } else { // means data is from DIRQ
             List<Byte> file = new LinkedList();
+            int counter = 0;
             for (byte b : data) {
-                if (b != 0x0) {
+                if (b != 0x0 && counter != data.length) {
                     file.add(b);
                 } else {
                     byte[] fileToPrint = new byte[file.size()];
@@ -208,9 +213,29 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
                         fileToPrint[i] = file.get(i);
                     }
                     file = new LinkedList<>();
-                    String name = new String(fileToPrint,StandardCharsets.UTF_8);
-                    System.out.println(name);
+                    String name;
+                    try {
+                        name = new String(fileToPrint,"UTF-8");
+                        System.out.println(name);
+                    } catch (UnsupportedEncodingException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
                 }
+                counter++;
+            }
+            byte[] fileToPrint = new byte[file.size()];
+            for (int i = 0; i < fileToPrint.length; i++) {
+                fileToPrint[i] = file.get(i);
+            }
+            file = new LinkedList<>();
+            String name;
+            try {
+                name = new String(fileToPrint,"UTF-8");
+                System.out.println(name);
+            } catch (UnsupportedEncodingException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
             }
         }
         byte[] opcode = { 0x0, 0x4 };
@@ -230,6 +255,8 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
         System.out.println("Handling ERROR");
         String print = "Error " + errorCode + "\n" + bytesToString(data);
         System.out.println(print);
+        if(currentOperation.equals("RRQ"))
+            fileToWrite.delete();
         return null;
     }
 
@@ -257,7 +284,12 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
     }
 
     private String bytesToString(byte[] bytes) {
-        return new String(bytes, StandardCharsets.UTF_8);
+        try {
+            return new String(bytes, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            // TODO Auto-generated catch block
+            return null;
+        }
     }
 
 }

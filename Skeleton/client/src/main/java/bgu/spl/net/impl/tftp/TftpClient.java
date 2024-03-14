@@ -29,7 +29,7 @@ public class TftpClient {
         Thread listener = new Thread(new ListeningThread(clientSocket,encdec, protocol));
         listener.start();
         System.out.println("Client started");
-        while(!shouldTerminate){
+        while(!protocol.shouldTerminate()){
             String input = keyboard.nextLine();
              if(isValid(input)){
                     try{
