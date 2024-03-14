@@ -76,6 +76,10 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
                 opcode = 1;
                 data = msg.substring(command[0].length() + 1);
                 fileToWrite = new File(data);
+                if(fileToWrite.exists()){
+                    System.out.println("file already exists");
+                    return null;
+                }
                 try {
                     fw = new FileOutputStream(fileToWrite);
                 } catch (FileNotFoundException e) {
