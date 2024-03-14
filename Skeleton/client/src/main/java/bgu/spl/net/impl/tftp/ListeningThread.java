@@ -36,10 +36,8 @@ public class ListeningThread implements Runnable {
                 if (nextMessage != null) {
                     byte[] response = protocol.process(nextMessage);
                     if (response != null) {
-                        synchronized(out){
                             out.write(encdec.encode(response));
                             out.flush();
-                        }
                     }
                 }
                 synchronized(keyboard){

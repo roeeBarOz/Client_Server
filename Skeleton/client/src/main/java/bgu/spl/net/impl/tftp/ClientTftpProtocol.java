@@ -32,6 +32,7 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
     private DataInputStream dis;
     private boolean RRQorDIRQ; // true = RRQ, false = DIRQ
     private String currentOperation;
+    private boolean isLoggedIn = false;
 
     @Override
     public byte[] process/* From */(byte[] msg) {
@@ -76,10 +77,6 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
                 opcode = 1;
                 data = msg.substring(command[0].length() + 1);
                 fileToWrite = new File(data);
-                if(fileToWrite.exists()){
-                    System.out.println("file already exists");
-                    return null;
-                }
                 try {
                     fw = new FileOutputStream(fileToWrite);
                 } catch (FileNotFoundException e) {
@@ -188,6 +185,8 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
         }
         if(currentOperation.equals("DISC"))
             shouldTerminate = true;
+        if(currentOperation.equals("LOGRQ"))
+            isLoggedIn = true;
         return null;
     }
 
@@ -294,5 +293,9 @@ public class ClientTftpProtocol implements MessagingProtocol<byte[]> {
             // TODO Auto-generated catch block
             return null;
         }
+    }
+
+    private boolean isLoggedIn(){
+        return isLoggedIn;
     }
 }
