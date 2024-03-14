@@ -21,14 +21,19 @@ public class TftpConnectionHandler implements Runnable, ConnectionHandler<byte[]
     private BufferedOutputStream out;
     private volatile boolean connected = true;
     private static int id = 0;
-
+    private static Object idObject = new Object();
+    private Connections connections;
+    private int ownerId;
     public TftpConnectionHandler(Socket sock, MessageEncoderDecoder reader, BidiMessagingProtocol protocol) {
         this.sock = sock;
         this.encdec = reader;
         this.protocol = protocol;
-        Connections<byte[]> c = new TftpConnections<>();
-        c.connect(0,this);
-        this.protocol.start(id++, c);
+        connections = new TftpConnections<>();
+        this.ownerId = id;
+        synchronized(idObject){
+            connections.connect(id,this);
+            this.protocol.start(id++, connections);
+        }
     }
 
 
@@ -44,6 +49,8 @@ public class TftpConnectionHandler implements Runnable, ConnectionHandler<byte[]
                    protocol.process(nextMessage);
                 }
             }
+            connections.disconnect(ownerId);
+            close();
         } catch (IOException ex) {
             ex.printStackTrace();
         }

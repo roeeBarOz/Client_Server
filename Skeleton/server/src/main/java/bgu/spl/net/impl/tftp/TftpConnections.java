@@ -7,7 +7,7 @@ import bgu.spl.net.srv.Connections;
 
 public class TftpConnections<T> implements Connections<T> {
 
-    private ConcurrentHashMap<Integer,ConnectionHandler> clientConnections = new ConcurrentHashMap<>();  
+    private static ConcurrentHashMap<Integer,ConnectionHandler> clientConnections = new ConcurrentHashMap<>();  
 
     @Override
     public void connect(int connectionId, ConnectionHandler<T> handler) {

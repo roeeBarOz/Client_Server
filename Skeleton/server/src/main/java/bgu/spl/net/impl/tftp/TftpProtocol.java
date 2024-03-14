@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -283,7 +284,7 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
     }
 
     private void handleLOGRQ(byte[] username, int ownerId) {
-        if (!holder.loggedIn.containsKey(ownerId)) {
+        if (!holder.loggedIn.containsKey(ownerId) && !doesContain(username)) {
             holder.loggedIn.put(ownerId, username);
             createAndSendAckPacket(ownerId, 0);
         } else {
@@ -425,5 +426,12 @@ public class TftpProtocol implements BidiMessagingProtocol<byte[]> {
         for (int i = 0; i < b2.length; i++)
             res[i + b1.length] = b2[i];
         return res;
+    }
+
+    private boolean doesContain(byte[] data){
+        for(byte[] bytes : holder.loggedIn.values())
+            if(Arrays.toString(bytes).equals(Arrays.toString(data)))
+                return true;
+        return false;
     }
 }
